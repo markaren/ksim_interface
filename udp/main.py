@@ -4,7 +4,7 @@ import pynmea2
 UDP_IP = "0.0.0.0"  # Listen on all available network interfaces
 UDP_PORT = 15101 
 
-def main()
+def main():
     
     # Create a UDP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -30,4 +30,4 @@ def main()
         print(f"Longitude: {msg.lon}")
 
 if __name__=="__main__":
-    main()
+    main
