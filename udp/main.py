@@ -1,3 +1,4 @@
+import time
 import socket
 import pynmea2
 
@@ -16,20 +17,21 @@ def main():
 
         while True:
             # Receive data from the socket
-            data, addr = sock.recvfrom(1024)  # 1024 is the maximum size of a UDP packet
+            data, addr = sock.recvfrom(256)  # 1024 is the maximum size of a UDP packet
 
-            # Parse the NMEA message using pynmea2
-            try:
-                msg = pynmea2.parse(data.decode("utf-8"))
-            except pynmea2.ParseError:
-                # The data is not a valid NMEA message, skip it
-                continue
+            dataStr = data.decode("utf-8")
+            
+            if dataStr.startsWith("$"):
+                try:
+                    # Parse the NMEA message using pynmea2
+                    msg = pynmea2.parse(dataStr)
+                except pynmea2.ParseError as e:
+                    # The data is not a valid NMEA message, skip it
+                    print(e)
+                    break
+            else:
+                print(dataStr)
 
-            # At this point, you can access the individual fields of the NMEA message
-            # using the properties of the `msg` object. For example:
-            print(f"Timestamp: {msg.timestamp}")
-            print(f"Latitude: {msg.lat}")
-            print(f"Longitude: {msg.lon}")
     except Exception as e:
         print(e)
 
