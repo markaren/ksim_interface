@@ -25,12 +25,15 @@ def main():
                 try:
                     # Parse the NMEA message using pynmea2
                     msg = pynmea2.parse(dataStr)
+                    print(msg)
                 except pynmea2.ParseError as e:
                     # The data is not a valid NMEA message, skip it
                     print(e)
                     break
             else:
                 print(dataStr)
+            
+            time.sleep(0.1)
 
     except Exception as e:
         print(e)
