@@ -10,12 +10,12 @@ def main():
         # Connect to the Modbus server
         client.connect()
         
-        # read registers 1-4
-        result = client.read_holding_registers(1, 4, unit=0x01)
+        # read registers 101-106
+        result = client.read_holding_registers(101, 6, unit=0x01)
         print(result.registers)
 
-        # write registers 101-106
-        #client.write_registers(101, [0, 0, 0, 0, 0, 0], unit=0x01)
+        # write registers 1-4
+        client.write_registers(1, [0, 0, 0, 0], unit=0x01)
 
         # Close the connection
         client.close()
