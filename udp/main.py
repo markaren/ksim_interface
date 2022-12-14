@@ -21,7 +21,7 @@ def main():
 
             dataStr = data.decode("utf-8")
             
-            if dataStr.startsWith("$"):
+            if dataStr.startswith("$"):
                 try:
                     # Parse the NMEA message using pynmea2
                     msg = pynmea2.parse(dataStr)
@@ -36,4 +36,4 @@ def main():
         print(e)
 
 if __name__=="__main__":
-    main
+    main()
