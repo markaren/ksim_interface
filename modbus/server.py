@@ -1,6 +1,9 @@
-from pymodbus.client import ModbusTcpClient
-import socket
+
 import json
+import socket
+from threading import Thread
+from pymodbus.client import ModbusTcpClient
+from json_types import ReadRequest, WriteRequest
 
 
 class ModbusWrapper:
@@ -9,17 +12,19 @@ class ModbusWrapper:
         self.client = ModbusTcpClient('localhost', port=port)
         self.client.connect()
 
-    def write(self, address: int, values):
-        self.client.write_registers(address, values, unit=0x01)
-
-    def read(self, address: int, count: int = 1):
-        return self.client.read_holding_registers(address, count, unit=0x01)
+    def makeRequest(self, request):
+        if isinstance(request, ReadRequest):
+            return self.client.read_holding_registers(request.address, request.count, unit=0x01)
+        elif isinstance(request, WriteRequest):
+            self.client.write_registers(request.address, request.values, unit=0x01)
+        else:
+            print(f"Error: illegal request: {request}")
 
     def close(self):
         self.client.close()
 
 
-class Socket:
+class ServerSocket:
 
     def __init__(self, port: int):
         server_address = ('localhost', port)
@@ -29,44 +34,61 @@ class Socket:
         print("Serving connections on port {}".format(server_address[1]))
         self.sock.listen()
 
-        self.conn, addr = self.sock.accept()
-        print(f"Connected by {addr}")
+        self.sim = ModbusWrapper(502)
 
-    def write(self, values):
-        data = json.dumps(values)
-        self.conn.send(len(data).to_bytes(4, byteorder="little"))
-        self.conn.send(data)
+        def accept():
+            try:
+                while True:
+                    conn, addr = self.sock.accept()
+                    print(f"Connected by {addr}")
+                    t = Thread(target=self._connectionHandler, args=(conn,))
+                    t.start()
+            except Exception as e:
+                pass
 
-    def read(self):
-        msgSize = int.from_bytes(self.conn.recv(4), byteorder="little")
-        msg = json.loads(self.conn.recv(msgSize).decode("utf-8"))
-        return msg
+        self.acceptorThread = Thread(target=accept)
+        self.acceptorThread.start()
+
+    def _connectionHandler(self, conn):
+
+        def write(values):
+            data = json.dumps(values).encode("utf-8")
+            conn.send(len(data).to_bytes(4, byteorder="little"))
+            conn.send(data)
+
+        def read():
+            msgSize = int.from_bytes(conn.recv(4), byteorder="little")
+            recv = conn.recv(msgSize).decode("utf-8")
+            msg = json.loads(recv)
+            return msg
+
+        try:
+            while True:
+                msg = read()
+                if "readRequest" in msg:
+                    req = ReadRequest.fromJSON(msg)
+                    values = self.sim.makeRequest(req)
+                    write(values)
+                elif "writeRequest" in msg:
+                    req = WriteRequest.fromJSON(msg)
+                    self.sim.makeRequest(req)
+        except Exception as e:
+            conn.close()
 
     def close(self):
-        self.conn.close()
         self.sock.close()
 
 
 def main():
 
     try:
-        conn = Socket(9090)
-        sim = ModbusWrapper(502)
-
-        while True:
-            msg = conn.read()
-            if "readRequest" in msg:
-                address = msg.readRequest.address
-                count = msg.readRequest.count
-                values = sim.read(address, count)
-                sim.write(address, values)
-            elif "writeRequest" in msg:
-                address = msg.data.address
-                values = msg.data.values
-                sim.write(address, values)
+        ss = ServerSocket(9090)
+        print("Press any key to exit..")
+        input()
+        ss.close()
     except Exception as e:
-        print(e)
-    
+        pass
+
 
 if __name__ == "__main__":
     main()
