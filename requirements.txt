@@ -1,0 +1,2 @@
+pynmea2
+pymodbus==3.0.2
