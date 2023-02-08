@@ -83,8 +83,8 @@ class ServerSocket:
                 msg = read()
                 if "readRequest" in msg:
                     req = ReadRequest.fromJSON(msg)
-                    values = self.sim.makeRequest(req)
-                    write(values)
+                    response = self.sim.makeRequest(req)
+                    write(response.registers)
                 elif "writeRequest" in msg:
                     req = WriteRequest.fromJSON(msg)
                     self.sim.makeRequest(req)
