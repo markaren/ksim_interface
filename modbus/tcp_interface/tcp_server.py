@@ -2,47 +2,8 @@
 import json
 import socket
 from threading import Thread
-from pymodbus.client import ModbusTcpClient
-from modbus.json.json_types import ReadRequest, WriteRequest
-
-
-class ModbusWrapper:
-
-    def __init__(self, port: int):
-        self.client = ModbusTcpClient('localhost', port=port)
-        self.client.connect()
-
-    def makeRequest(self, request):
-        if isinstance(request, ReadRequest):
-            return self.client.read_holding_registers(request.address, request.count, unit=0x01)
-        elif isinstance(request, WriteRequest):
-            self.client.write_registers(request.address, request.values, unit=0x01)
-        else:
-            print(f"Error: illegal request: {request}")
-
-    def close(self):
-        self.client.close()
-
-
-# used for testing
-class DummyModbusWrapper(ModbusWrapper):
-
-    class RegisterWrapper:
-
-        def __init__(self, values):
-            self.registers = values
-
-    def __init__(self, port):
-        self.values = [0] * 1000
-
-    def makeRequest(self, request):
-        if isinstance(request, ReadRequest):
-            return DummyModbusWrapper.RegisterWrapper(self.values[request.address: request.address+request.count])
-        elif isinstance(request, WriteRequest):
-            self.values[request.address: len(request.values)] = request.values
-
-    def close(self):
-        pass
+from modbus.Simulator import Simulator
+from modbus.json_types import ReadRequest, WriteRequest
 
 
 class ServerSocket:
@@ -55,7 +16,7 @@ class ServerSocket:
         print("Serving connections on port {}".format(server_address[1]))
         self.sock.listen()
 
-        self.sim = DummyModbusWrapper(502)
+        self.sim = Simulator(("localhost", 502))
 
         def accept():
             try:
@@ -89,7 +50,7 @@ class ServerSocket:
                 if "readRequest" in msg:
                     req = ReadRequest.fromJSON(msg)
                     response = self.sim.makeRequest(req)
-                    write(response.registers)
+                    write(response)
                 elif "writeRequest" in msg:
                     req = WriteRequest.fromJSON(msg)
                     self.sim.makeRequest(req)
