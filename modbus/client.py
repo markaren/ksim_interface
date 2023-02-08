@@ -33,8 +33,9 @@ class ClientSocket:
 def main():
 
     sock = ClientSocket(("localhost", 9090))
-    values = sock.read(address=1, count=1)
-    sock.write(address=1, values=[1, 2, 3])
+    values = sock.read(address=101, count=6)
+    print(f"Got: {values}")
+    sock.write(address=1, values=[0, 0, 0, 0])
     sock.close()
 
 

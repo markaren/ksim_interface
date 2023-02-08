@@ -24,6 +24,22 @@ class ModbusWrapper:
         self.client.close()
 
 
+# used for testing
+class DummyModbusWrapper(ModbusWrapper):
+
+    def __init__(self, port):
+        self.values = [1, 2, 3, 4, 5]
+
+    def makeRequest(self, request):
+        if isinstance(request, ReadRequest):
+            return self.values[request.address : request.address+request.count]
+        elif isinstance(request, WriteRequest):
+            self.values = request.values
+
+    def close(self):
+        pass
+
+
 class ServerSocket:
 
     def __init__(self, port: int):
@@ -73,6 +89,7 @@ class ServerSocket:
                     req = WriteRequest.fromJSON(msg)
                     self.sim.makeRequest(req)
         except Exception as e:
+            print("Client disconnected")
             conn.close()
 
     def close(self):
