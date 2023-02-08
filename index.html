@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>K-sim-interface</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            max-height: 100%;
+            font-family: Sans-Serif;
+            line-height: 1.5em;
+        }
+
+        main {
+            position: fixed;
+            top: 50px; /* Set this to the height of the header */
+            bottom: 50px; /* Set this to the height of the footer */
+            left: 0;
+            right: 0;
+            overflow: auto;
+            background: #fff;
+        }
+
+        #header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            overflow: hidden; /* Disables scrollbars on the header frame. To enable scrollbars, change "hidden" to "scroll" */
+            background: #BCCE98;
+        }
+
+        #footer {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 50px;
+            overflow: hidden; /* Disables scrollbars on the footer frame. To enable scrollbars, change "hidden" to "scroll" */
+            background: #BCCE98;
+        }
+
+        #tablebody {
+            width: 40%;
+            overflow: auto;
+        }
+
+        .innertube {
+            margin: 15px; /* Provides padding for the content */
+        }
+
+        * html main {
+            height: 100%;
+            width: 100%;
+        }
+
+        table.Table {
+            width: 100%;
+            background-color: #FFFFFF;
+            border-collapse: collapse;
+            border-width: 1px;
+            border-color: #336600;
+            border-style: solid;
+            color: #009900;
+        }
+
+        table.Table td, table.Table th {
+            border-width: 1px;
+            border-color: #336600;
+            border-style: solid;
+            padding: 3px;
+            overflow:hidden; white-space:nowrap;
+        }
+
+        table.Table thead {
+            background-color: #CCFF99;
+        }
+    </style>
+</head>
+<body>
+
+    <header id="header">
+        <div class="innertube">
+            <p>Bastø Fosen Websocket Interface</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="innertube">
+           <div id="tablebody">
+
+               <div id="order_div">
+                   <h3>Function Code 03 request K-Sim (order)</h3>
+                   <table class="Table">
+                       <thead>
+                       <tr>
+                           <th>Register</th>
+                           <th>Sensor</th>
+                           <th>Value</th>
+                           <th>Unit</th>
+                       </tr>
+                       </thead>
+                       <tbody id="order_tbody">
+                       <tr>
+                           <td>#1</td>
+                           <td>Lever Order Forward Azimuth Range</td>
+                           <td contenteditable id ="register#1"></td>
+                           <td>%</td>
+                       </tr>
+                        <tr>
+                            <td>#2</td>
+                            <td>Lever Order Aft Azimuth Range</td>
+                            <td contenteditable id ="register#2"></td>
+                            <td>%</td>
+                       </tr>
+                       <tr>
+                            <td>#3</td>
+                            <td>Azimuth Order Forward Azimuth Range</td>
+                            <td contenteditable id ="register#3"></td>
+                            <td>deg</td>
+                       </tr>
+                       <tr>
+                            <td>#4</td>
+                            <td>Azimuth Order Aft Azimuth Range</td>
+                            <td contenteditable id ="register#4"></td>
+                            <td>deg</td>
+                       </tr>
+                       </tbody>
+                   </table>
+               </div>
+
+               <button onclick="sendOrder()">Send</button>
+
+               <div id="feedback_div">
+                   <h3>Function Code 03 request K-Sim (order)</h3>
+                   <table class="Table">
+                       <thead>
+                       <tr>
+                           <th>Register</th>
+                           <th>Sensor</th>
+                           <th>Value</th>
+                           <th>Unit</th>
+                       </tr>
+                       </thead>
+                       <tbody id="feedback_tbody">
+                       <tr>
+                           <td>#101</td>
+                           <td>Power Forward Azimuth Range</td>
+                           <td id ="register#101"></td>
+                           <td>kW</td>
+                       </tr>
+                        <tr>
+                            <td>#102</td>
+                            <td>Lever Feedback Forward Azimuth Range</td>
+                            <td id ="register#102"></td>
+                            <td>%</td>
+                       </tr>
+                       <tr>
+                            <td>#103</td>
+                            <td>Azimuth Feedback Forward Azimuth Range</td>
+                            <td id ="register#103"></td>
+                            <td>deg</td>
+                       </tr>
+                       <tr>
+                            <td>#104</td>
+                            <td>Power Aft Azimuth Range</td>
+                            <td id ="register#104"></td>
+                            <td>kW</td>
+                       </tr>
+                       <tr>
+                            <td>#105</td>
+                            <td>Lever Feedback Aft Azimuth Range</td>
+                            <td id ="register#105"></td>
+                            <td>%</td>
+                       </tr>
+                       <tr>
+                            <td>#106</td>
+                            <td>Azimuth Feedback Aft Azimuth Range</td>
+                            <td id ="register#106"></td>
+                            <td>deg</td>
+                       </tr>
+                       </tbody>
+                   </table>
+               </div>
+
+            </div>
+        </div>
+    </main>
+
+        <footer id="footer">
+        <div class="innertube">
+            <p>&copy; 2023 NTNU Ålesund</p>
+        </div>
+    </footer>
+
+<script>
+
+    const ws = new WebSocket("ws://localhost:8765");
+
+    ws.addEventListener("open", (evt) => {
+        ws.send(makeReadRequest(1, 4));
+        ws.send(makeReadRequest(101, 6));
+        ws.send(makeWriteRequest(1, [50, 50, 100]));
+    });
+
+    ws.addEventListener('message', (evt) => {
+        const registers = JSON.parse(evt.data)
+        for (const key in registers) {
+            const td = document.getElementById("register#" + key)
+            td.textContent = registers[key]
+        }
+    });
+
+    function makeReadRequest(address, count) {
+        return JSON.stringify({
+            "readRequest": {
+                "address": address,
+                "count": count
+            }
+        });
+    }
+
+    function makeWriteRequest(address, values) {
+        return JSON.stringify({
+            "writeRequest": {
+                "address": address,
+                "values": values
+            }
+        });
+    }
+
+    function getOrder() {
+        const order = []
+        for (let i = 1; i <= 4; i++) {
+            const value = document.getElementById("register#" + i).innerText
+            order.push(value)
+        }
+        return order
+    }
+
+    function sendOrder() {
+        const order = getOrder()
+        ws.send(makeWriteRequest(1, order))
+    }
+
+
+</script>
+
+</body>
+</html>

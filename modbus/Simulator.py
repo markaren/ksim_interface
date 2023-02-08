@@ -28,7 +28,10 @@ class DummySimulator(Simulator):
 
     def makeRequest(self, request):
         if isinstance(request, ReadRequest):
-            return self.values[request.address: request.address+request.count]
+            map = {}
+            for i in range(request.address, request.address+request.count):
+                map[i] = self.values[i]
+            return map
         elif isinstance(request, WriteRequest):
             self.values[request.address: request.address + len(request.values)] = request.values
 
