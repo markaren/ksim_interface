@@ -3,7 +3,7 @@ import json
 import socket
 from threading import Thread
 from pymodbus.client import ModbusTcpClient
-from json_types import ReadRequest, WriteRequest
+from modbus.json.json_types import ReadRequest, WriteRequest
 
 
 class ModbusWrapper:
@@ -27,14 +27,19 @@ class ModbusWrapper:
 # used for testing
 class DummyModbusWrapper(ModbusWrapper):
 
+    class RegisterWrapper:
+
+        def __init__(self, values):
+            self.registers = values
+
     def __init__(self, port):
-        self.values = [1, 2, 3, 4, 5]
+        self.values = [0] * 1000
 
     def makeRequest(self, request):
         if isinstance(request, ReadRequest):
-            return self.values[request.address : request.address+request.count]
+            return DummyModbusWrapper.RegisterWrapper(self.values[request.address: request.address+request.count])
         elif isinstance(request, WriteRequest):
-            self.values = request.values
+            self.values[request.address: len(request.values)] = request.values
 
     def close(self):
         pass
@@ -50,7 +55,7 @@ class ServerSocket:
         print("Serving connections on port {}".format(server_address[1]))
         self.sock.listen()
 
-        self.sim = ModbusWrapper(502)
+        self.sim = DummyModbusWrapper(502)
 
         def accept():
             try:
@@ -83,8 +88,8 @@ class ServerSocket:
                 msg = read()
                 if "readRequest" in msg:
                     req = ReadRequest.fromJSON(msg)
-                    values = self.sim.makeRequest(req)
-                    write(values)
+                    response = self.sim.makeRequest(req)
+                    write(response.registers)
                 elif "writeRequest" in msg:
                     req = WriteRequest.fromJSON(msg)
                     self.sim.makeRequest(req)

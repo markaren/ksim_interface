@@ -1,7 +1,7 @@
 
 import json
 import socket
-from json_types import ReadRequest, WriteRequest
+from modbus.json.json_types import ReadRequest, WriteRequest
 
 
 class ClientSocket:
