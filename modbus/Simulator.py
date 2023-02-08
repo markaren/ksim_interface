@@ -30,7 +30,7 @@ class DummySimulator(Simulator):
         if isinstance(request, ReadRequest):
             return self.values[request.address: request.address+request.count]
         elif isinstance(request, WriteRequest):
-            self.values[request.address: len(request.values)] = request.values
+            self.values[request.address: request.address + len(request.values)] = request.values
 
     def close(self):
         pass
