@@ -10,7 +10,13 @@ class Simulator:
 
     def makeRequest(self, request):
         if isinstance(request, ReadRequest):
-            return self.client.read_holding_registers(request.address, request.count, unit=0x01).registers
+            values = self.client.read_holding_registers(request.address, request.count, unit=0x01).registers
+            map = {}
+            index = 0
+            for register in range(request.address, request.address+request.count):
+                map[register] = values[index]
+                index = index + 1
+            return map
         elif isinstance(request, WriteRequest):
             self.client.write_registers(request.address, request.values, unit=0x01)
         else:
@@ -29,8 +35,8 @@ class DummySimulator(Simulator):
     def makeRequest(self, request):
         if isinstance(request, ReadRequest):
             map = {}
-            for i in range(request.address, request.address+request.count):
-                map[i] = self.values[i]
+            for register in range(request.address, request.address+request.count):
+                map[register] = self.values[register]
             return map
         elif isinstance(request, WriteRequest):
             self.values[request.address: request.address + len(request.values)] = request.values

@@ -3,14 +3,15 @@ import json
 import asyncio
 import websockets
 
-from modbus.Simulator import DummySimulator
+from modbus.Simulator import Simulator, DummySimulator
 from modbus.json_types import ReadRequest, WriteRequest
 
 
 class Handler:
 
     def __init__(self):
-        self.sim = DummySimulator(("localhost", 502))
+        self.sim = DummySimulator(("", 0))
+        # self.sim = Simulator(("0.0.0.0", 502))
         self.subs = []
 
     async def handleRequest(self, websocket):
@@ -38,7 +39,7 @@ async def main():
         print("Press any key to exit..")
         input()
 
-    async with websockets.serve(handler.handleRequest, "localhost", 8765):
+    async with websockets.serve(handler.handleRequest, "0.0.0.0", 8765):
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, wait)
 
