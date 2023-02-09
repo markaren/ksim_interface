@@ -9,7 +9,8 @@ class ReadRequest:
 
     def toJSON(self):
         return json.dumps({
-            "readRequest": {
+            "request": "read",
+            "payload": {
                 "address": self.address,
                 "count": self.count
             }
@@ -17,7 +18,7 @@ class ReadRequest:
 
     @staticmethod
     def fromJSON(data):
-        req = data["readRequest"]
+        req = data["payload"]
         return ReadRequest(req["address"], req["count"])
 
 
@@ -29,7 +30,8 @@ class WriteRequest:
 
     def toJSON(self):
         return json.dumps({
-            "writeRequest": {
+            "request": "write",
+            "payload": {
                 "address": self.address,
                 "values": self.values
             }
@@ -37,5 +39,5 @@ class WriteRequest:
 
     @staticmethod
     def fromJSON(data):
-        req = data["writeRequest"]
+        req = data["payload"]
         return WriteRequest(req["address"], req["values"])

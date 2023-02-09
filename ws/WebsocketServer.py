@@ -11,15 +11,24 @@ class Handler:
 
     def __init__(self):
         self.sim = DummySimulator(("localhost", 502))
+        self.subs = []
 
     async def handleRequest(self, websocket):
         async for message in websocket:
             msg = json.loads(message)
-            if "readRequest" in message:
+            requestType = msg["request"]
+            if "read" == requestType:
                 values = self.sim.makeRequest(ReadRequest.fromJSON(msg))
-                await websocket.send(json.dumps(values))
-            elif "writeRequest" in message:
+                try:
+                    await websocket.send(json.dumps(values))
+                except Exception:
+                    if websocket in self.subs:
+                        self.subs.remove(websocket)
+
+            elif "write" == requestType:
                 self.sim.makeRequest(WriteRequest.fromJSON(msg))
+            elif "subscribe" == requestType:
+                self.subs.append(websocket)
 
 
 async def main():

@@ -134,10 +134,11 @@
                    </table>
                </div>
 
-               <button onclick="sendOrder()">Send</button>
+               <button onclick="sendOrders()">Send</button>
+               <button onclick="updateOrders()">Force read</button>
 
                <div id="feedback_div">
-                   <h3>Function Code 03 request K-Sim (order)</h3>
+                   <h3>Function Code 16 request K-Sim (feedback)</h3>
                    <table class="Table">
                        <thead>
                        <tr>
@@ -192,7 +193,7 @@
         </div>
     </main>
 
-        <footer id="footer">
+    <footer id="footer">
         <div class="innertube">
             <p>&copy; 2023 NTNU Ålesund</p>
         </div>
@@ -203,11 +204,11 @@
     const ws = new WebSocket("ws://localhost:8765");
 
     ws.addEventListener("open", (evt) => {
-        ws.send(makeReadRequest(1, 4));
+        updateOrders()
 
         const interval = setInterval(() => {
             if (ws.readyState === WebSocket.OPEN) {
-                ws.send(makeReadRequest(101, 6));
+                updateFeedback()
             } else {
                 clearInterval(interval)
             }
@@ -225,7 +226,8 @@
 
     function makeReadRequest(address, count) {
         return JSON.stringify({
-            "readRequest": {
+            "request": "read",
+            "payload": {
                 "address": address,
                 "count": count
             }
@@ -234,14 +236,15 @@
 
     function makeWriteRequest(address, values) {
         return JSON.stringify({
-            "writeRequest": {
+            "request": "write",
+            "payload": {
                 "address": address,
                 "values": values
             }
         });
     }
 
-    function getOrder() {
+    function getOrders() {
         const order = []
         for (let i = 1; i <= 4; i++) {
             const value = document.getElementById("register#" + i).innerText
@@ -250,8 +253,16 @@
         return order
     }
 
-    function sendOrder() {
-        const order = getOrder()
+    function updateOrders() {
+        ws.send(makeReadRequest(1, 4))
+    }
+
+    function updateFeedback() {
+        ws.send(makeReadRequest(101, 6))
+    }
+
+    function sendOrders() {
+        const order = getOrders()
         ws.send(makeWriteRequest(1, order))
     }
 
