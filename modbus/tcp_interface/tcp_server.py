@@ -2,7 +2,7 @@
 import json
 import socket
 from threading import Thread
-from modbus.Simulator import Simulator
+from modbus.Simulator import DummySimulator, Simulator
 from modbus.json_types import ReadRequest, WriteRequest
 
 
@@ -16,7 +16,7 @@ class ServerSocket:
         print("Serving connections on port {}".format(server_address[1]))
         self.sock.listen()
 
-        self.sim = Simulator(("localhost", 502))
+        self.sim = DummySimulator(("localhost", 502))
 
         def accept():
             try:
@@ -47,11 +47,12 @@ class ServerSocket:
         try:
             while True:
                 msg = read()
-                if "readRequest" in msg:
+                requestType = msg["request"]
+                if "read" == requestType:
                     req = ReadRequest.fromJSON(msg)
                     response = self.sim.makeRequest(req)
                     write(response)
-                elif "writeRequest" in msg:
+                elif "write" == requestType:
                     req = WriteRequest.fromJSON(msg)
                     self.sim.makeRequest(req)
         except Exception as e:
