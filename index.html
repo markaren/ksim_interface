@@ -207,6 +207,8 @@
     ws.addEventListener("open", (evt) => {
         updateOrders()
 
+        ws.send(JSON.stringify({"request": "subscribe"}))
+
         const interval = setInterval(() => {
             if (ws.readyState === WebSocket.OPEN) {
                 updateFeedback()
@@ -218,11 +220,17 @@
     });
 
     ws.addEventListener('message', (evt) => {
-        const registers = JSON.parse(evt.data)
-        for (const key in registers) {
-            const td = document.getElementById("register#" + key)
-            td.textContent = registers[key]
+        const data = JSON.parse(evt.data)
+        if (data["registers"] !== undefined) {
+            registers = data["registers"]
+            for (const key in registers) {
+                const td = document.getElementById("register#" + key)
+                td.textContent = registers[key]
+            }
+        } else if (data["message"]) {
+            console.log(data["message"])
         }
+
     });
 
     function makeReadRequest(address, count) {

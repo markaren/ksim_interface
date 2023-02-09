@@ -30,11 +30,16 @@ class Handler:
 
                 while True:
                     data, addr = self.sock.recvfrom(256)
-                    dataStr = data.decode("utf-8")
-                    tasks = []
-                    for sub in self.subs:
-                        tasks.append(asyncio.create_task(publish(sub, dataStr)))
-                    self.loop.run_until_complete(asyncio.gather(*tasks))
+                    message = json.dumps({
+                        "message": data.decode("utf-8")
+                    })
+                    # print(dataStr)
+                    if self.subs:
+                        futures = []
+                        for sub in self.subs:
+                            futures.append(asyncio.run_coroutine_threadsafe(publish(sub, message), self.loop))
+                        for f in futures:
+                            f.result()
             except:
                 self.sock = None
 
@@ -52,8 +57,11 @@ class Handler:
             requestType = msg["request"]
             if "read" == requestType:
                 values = self.sim.makeRequest(ReadRequest.fromJSON(msg))
+                response = json.dumps({
+                    "registers": values
+                })
                 try:
-                    await websocket.send(json.dumps(values))
+                    await websocket.send(response)
                 except:
                     if websocket in self.subs:
                         self.subs.remove(websocket)
