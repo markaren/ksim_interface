@@ -204,8 +204,15 @@
 
     ws.addEventListener("open", (evt) => {
         ws.send(makeReadRequest(1, 4));
-        ws.send(makeReadRequest(101, 6));
-        ws.send(makeWriteRequest(1, [50, 50, 100]));
+
+        const interval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(makeReadRequest(101, 6));
+            } else {
+                clearInterval(interval)
+            }
+        }, 100);
+
     });
 
     ws.addEventListener('message', (evt) => {
